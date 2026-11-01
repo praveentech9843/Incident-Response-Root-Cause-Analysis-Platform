@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI-Powered Incident Response & RCA Platform",
+    "output": "architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "ingestion_path",
+        "label": "1. Ingestion & Parse",
+        "focus": ["react_frontend", "fastapi_gateway", "auth_rbac", "log_ingest", "log_parser"],
+        "note": "Raw log upload, JWT authentication, SHA-256 deduplication, and deterministic JSON/regex parsing."
+      },
+      {
+        "id": "rca_path",
+        "label": "2. Correlation & RCA",
+        "focus": ["log_parser", "correlation_engine", "rca_engine", "external_ai", "recommendation_engine"],
+        "note": "Temporal incident clustering, multi-hypothesis reasoning, anti-hallucination validation, and fix generation."
+      },
+      {
+        "id": "resolution_path",
+        "label": "3. Resolution & Storage",
+        "focus": ["recommendation_engine", "investigation_workspace", "postgres_db", "react_frontend"],
+        "note": "Developer investigation workflow, verification checklist gate, and ACID database resolution commit."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "react_frontend",
+      "type": "frontend",
+      "label": "React Frontend",
+      "sublabel": "Vite + TypeScript SPA",
+      "tag": "Port 5173",
+      "icon": "frontend",
+      "pos": [50, 180],
+      "size": [140, 60]
+    },
+    {
+      "id": "fastapi_gateway",
+      "type": "backend",
+      "label": "FastAPI Gateway",
+      "sublabel": "Uvicorn / ASGI Router",
+      "tag": "Port 8000",
+      "icon": "backend",
+      "pos": [320, 180],
+      "size": [140, 60]
+    },
+    {
+      "id": "auth_rbac",
+      "type": "security",
+      "label": "Auth & RBAC",
+      "sublabel": "JWT Bearer / Role Guard",
+      "tag": "Admin & Dev",
+      "icon": "security",
+      "pos": [320, 50],
+      "size": [140, 60]
+    },
+    {
+      "id": "log_ingest",
+      "type": "backend",
+      "label": "Log Ingestion",
+      "sublabel": "Validation & Deduplication",
+      "tag": "SHA-256 Hash",
+      "icon": "backend",
+      "pos": [590, 180],
+      "size": [140, 60]
+    },
+    {
+      "id": "log_parser",
+      "type": "backend",
+      "label": "Log Parser",
+      "sublabel": "Deterministic Extractor",
+      "tag": "JSON & Regex",
+      "icon": "backend",
+      "pos": [860, 180],
+      "size": [140, 60]
+    },
+    {
+      "id": "correlation_engine",
+      "type": "backend",
+      "label": "Correlation Engine",
+      "sublabel": "Temporal Proximity",
+      "tag": "30s Window",
+      "icon": "backend",
+      "pos": [860, 340],
+      "size": [140, 60]
+    },
+    {
+      "id": "rca_engine",
+      "type": "backend",
+      "label": "RCA Engine",
+      "sublabel": "Evidence Validation",
+      "tag": "Anti-Hallucination",
+      "icon": "backend",
+      "pos": [590, 340],
+      "size": [140, 60]
+    },
+    {
+      "id": "recommendation_engine",
+      "type": "backend",
+      "label": "Recommendations",
+      "sublabel": "Grounded Fix Synthesis",
+      "tag": "Action Guardrails",
+      "icon": "backend",
+      "pos": [320, 340],
+      "size": [140, 60]
+    },
+    {
+      "id": "investigation_workspace",
+      "type": "backend",
+      "label": "Investigation",
+      "sublabel": "Checklist Verification",
+      "tag": "Resolution Gate",
+      "icon": "backend",
+      "pos": [320, 520],
+      "size": [140, 60]
+    },
+    {
+      "id": "postgres_db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "ACID Relational Storage",
+      "tag": "Port 5432",
+      "icon": "database",
+      "pos": [50, 520],
+      "size": [140, 60]
+    },
+    {
+      "id": "external_ai",
+      "type": "external",
+      "label": "External LLM",
+      "sublabel": "HTTP REST / Chat API",
+      "tag": "Optional Provider",
+      "icon": "external",
+      "pos": [590, 670],
+      "size": [140, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Client Trust Boundary (Browser)",
+      "wraps": ["react_frontend"]
+    },
+    {
+      "kind": "security-group",
+      "label": "FastAPI Core Services Mesh",
+      "wraps": [
+        "fastapi_gateway",
+        "auth_rbac",
+        "log_ingest",
+        "log_parser",
+        "correlation_engine",
+        "rca_engine",
+        "recommendation_engine",
+        "investigation_workspace"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Persistence Tier (ACID Storage)",
+      "wraps": ["postgres_db"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users_to_gateway",
+      "from": "react_frontend",
+      "to": "fastapi_gateway",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "1. Upload log",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway_to_auth",
+      "from": "fastapi_gateway",
+      "to": "auth_rbac",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "label": "2. Verify RBAC",
+      "variant": "security"
+    },
+    {
+      "id": "gateway_to_ingest",
+      "from": "fastapi_gateway",
+      "to": "log_ingest",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "3. Ingest log",
+      "variant": "default"
+    },
+    {
+      "id": "ingest_to_parser",
+      "from": "log_ingest",
+      "to": "log_parser",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "4. Parse events",
+      "variant": "default"
+    },
+    {
+      "id": "parser_to_correlator",
+      "from": "log_parser",
+      "to": "correlation_engine",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "5. Correlate",
+      "variant": "default"
+    },
+    {
+      "id": "correlator_to_rca",
+      "from": "correlation_engine",
+      "to": "rca_engine",
+      "fromSide": "left",
+      "toSide": "right",
+      "label": "6. RCA evidence",
+      "variant": "default"
+    },
+    {
+      "id": "rca_to_llm",
+      "from": "rca_engine",
+      "to": "external_ai",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "7. Query LLM / Mock",
+      "variant": "dashed"
+    },
+    {
+      "id": "rca_to_rec",
+      "from": "rca_engine",
+      "to": "recommendation_engine",
+      "fromSide": "left",
+      "toSide": "right",
+      "label": "8. Validated RCA",
+      "variant": "default"
+    },
+    {
+      "id": "rec_to_workspace",
+      "from": "recommendation_engine",
+      "to": "investigation_workspace",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "9. Fix actions",
+      "variant": "default"
+    },
+    {
+      "id": "workspace_to_db",
+      "from": "investigation_workspace",
+      "to": "postgres_db",
+      "fromSide": "left",
+      "toSide": "right",
+      "label": "10. Commit fix",
+      "variant": "emphasis"
+    },
+    {
+      "id": "db_to_frontend",
+      "from": "postgres_db",
+      "to": "react_frontend",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "label": "11. Resolved status",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ingestion & Deterministic Parsing",
+      "items": [
+        "LogService (backend/app/services/log_service.py:32): Validates UTF-8 encoding, <=10MB size limits, and SHA-256 deduplication.",
+        "ParserRegistry (backend/app/parsers/parser_registry.py:15): Deterministically routes to JSONLogParser or TextLogParser.",
+        "Extracted structured fields: timestamp, log level, service name, exception type, message, and line-numbered stack traces."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Correlation & Evidence-Grounded RCA",
+      "items": [
+        "CorrelationService (backend/app/services/correlation_service.py:30): Groups parsed logs into incidents using 30s temporal windows and cross-service traces.",
+        "RootCauseAnalyzer (backend/app/rca/analyzer.py:16): Packages controlled evidence and executes multi-hypothesis reasoning.",
+        "RCAValidator (backend/app/rca/validators.py:25): Strict anti-hallucination gate checking evidence citations and hypothesis grounds."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AI Recommendations & Guardrails",
+      "items": [
+        "RecommendationGenerator (backend/app/recommendations/generator.py:15): Generates diagnostic actions derived strictly from validated RCA.",
+        "LLM Providers (backend/app/rca/providers/llm_provider.py:18): Decoupled OpenAI/Gemini/Mock provider invoked over httpx with graceful fallback.",
+        "Safety Guardrails: Rejects ungrounded shell commands, hallucinated configuration changes, and unverified fixes."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Developer Investigation & Resolution",
+      "items": [
+        "InvestigationService (backend/app/services/investigation_service.py:45): Manages developer assignment, notes, and actions.",
+        "Resolution Gate (backend/app/api/v1/endpoints/incidents.py:650): Requires all verification checklist steps to pass before RESOLVED state.",
+        "Audit Trail (backend/app/services/audit_service.py:10): Immutable logging of reviews, status transitions, and acting identities."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Security, RBAC & Persistence",
+      "items": [
+        "Auth Layer (backend/app/api/dependencies/auth.py:12): PyJWT Bearer validation, token expiry, and Role-Based Access Control (Admin, Developer, Viewer).",
+        "PostgreSQL (backend/app/core/database.py:22): ACID relational store for users, logs, incidents, RCAs, recommendations, and audit logs.",
+        "No Redis or Celery: Platform executes synchronous transactional processing; no background worker queue is implemented."
+      ]
+    }
+  ]
+}

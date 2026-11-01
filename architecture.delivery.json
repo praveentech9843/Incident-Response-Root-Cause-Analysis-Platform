@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c9211aa9-c42d-471e-9ceb-32558a47164a",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\Projects\\AI-Powered Incident Response & Root Cause Analysis Platform\\.archify\\architecture-incident-platform-20261009-060445\\candidate.json",
+  "output": "C:\\Projects\\AI-Powered Incident Response & Root Cause Analysis Platform\\architecture.html",
+  "specification": {
+    "sha256": "aec34c5e859abfe7cb1c014d0f7df746cfd016f886d9d220da9f52c9f41e1bcb",
+    "bytes": 9621
+  },
+  "artifact": {
+    "sha256": "9524da5b7db436e2d188a51172835edb9cdec6509874887c255b56d6af9977a2",
+    "bytes": 772728
+  }
+}

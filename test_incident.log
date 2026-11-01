@@ -1,0 +1,5 @@
+2026-10-08 10:00:01 INFO OrderService Order request received
+2026-10-08 10:00:02 ERROR PaymentService Database connection timeout
+2026-10-08 10:00:03 ERROR PaymentService java.sql.SQLException: Connection timeout
+2026-10-08 10:00:04 ERROR OrderService Payment request failed
+2026-10-08 10:00:05 WARN ApiService Payment service unavailable
