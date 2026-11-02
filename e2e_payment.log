@@ -1,2 +1,0 @@
-﻿2026-10-09 10:00:02 ERROR PaymentService correlation_id=E2E-RCA-001 Payment processing failed due to database connectivity
-2026-10-09 10:00:04 ERROR PaymentService correlation_id=E2E-RCA-001 Payment transaction could not complete
