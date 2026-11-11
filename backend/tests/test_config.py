@@ -29,3 +29,17 @@ def test_custom_env_config_loading():
         assert cfg.SECRET_KEY == "super-secret-staging-key-12345"
         assert cfg.CORS_ORIGINS == ["http://staging.example.com"]
         assert cfg.DB_POOL_SIZE == 15
+
+
+def test_postgres_scheme_normalization():
+    """Verify that postgres:// (common in Neon, Render, Heroku) is normalized to postgresql://."""
+    legacy_env = {
+        "DATABASE_URL": "postgres://neondb_owner:npg_secret@ep-cool.neon.tech/neondb?sslmode=require",
+        "TEST_DATABASE_URL": "postgres://neondb_owner:npg_secret@ep-cool.neon.tech/neondb_test?sslmode=require",
+    }
+    with mock.patch.dict(os.environ, legacy_env):
+        cfg = Settings()
+        assert cfg.DATABASE_URL.startswith("postgresql://")
+        assert cfg.TEST_DATABASE_URL.startswith("postgresql://")
+        assert "postgres://" not in cfg.DATABASE_URL
+        assert "postgres://" not in cfg.TEST_DATABASE_URL

@@ -1,15 +1,25 @@
+import os
+import sys
+from pathlib import Path
+
+# Ensure backend root directory is in sys.path
+backend_dir = Path(__file__).resolve().parent.parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import AsyncGenerator
 import uuid
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import api_router
-from app.api.v1.endpoints.health import router as health_router
+from app.api.v1.endpoints.health import HealthResponse, router as health_router
 from app.core.config import settings
 from app.core.logging import get_logger, setup_logging
 
@@ -33,12 +43,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 def create_application() -> FastAPI:
     """Application factory creating the configured FastAPI instance."""
+    # Determine documentation URLs based on configuration
+    docs_enabled = bool(settings.ENABLE_DOCS)
+    openapi_url = settings.OPENAPI_URL if (docs_enabled and settings.OPENAPI_URL) else None
+    docs_url = settings.DOCS_URL if (docs_enabled and settings.DOCS_URL) else None
+    redoc_url = settings.REDOC_URL if (docs_enabled and settings.REDOC_URL) else None
+
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
-        openapi_url=f"{settings.API_V1_PREFIX}/openapi.json" if settings.DEBUG else None,
-        docs_url=f"{settings.API_V1_PREFIX}/docs" if settings.DEBUG else None,
-        redoc_url=f"{settings.API_V1_PREFIX}/redoc" if settings.DEBUG else None,
+        openapi_url=openapi_url,
+        docs_url=docs_url,
+        redoc_url=redoc_url,
         lifespan=lifespan,
     )
 
@@ -149,6 +165,53 @@ def create_application() -> FastAPI:
         )
 
     # --------------------------------------------------------------------------
+    # Root & Utility Endpoints
+    # --------------------------------------------------------------------------
+    @app.get(
+        "/",
+        response_model=HealthResponse,
+        tags=["Root"],
+        summary="Application Root",
+        description="Root status and metadata endpoint returning application name, status, and version without sensitive data.",
+    )
+    def root() -> HealthResponse:
+        return HealthResponse(
+            status="ok",
+            app_name=settings.APP_NAME,
+            version=settings.APP_VERSION,
+            environment=settings.APP_ENV,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        )
+
+    @app.get(
+        "/favicon.ico",
+        include_in_schema=False,
+        summary="Favicon",
+        description="Returns 204 No Content for favicon requests to prevent unnecessary 404 logs.",
+    )
+    def favicon() -> Response:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    # --------------------------------------------------------------------------
+    # Backward Compatibility Redirects for Legacy Prefixed Documentation Routes
+    # --------------------------------------------------------------------------
+    if docs_enabled:
+        if docs_url and docs_url != f"{settings.API_V1_PREFIX}/docs":
+            @app.get(f"{settings.API_V1_PREFIX}/docs", include_in_schema=False)
+            def legacy_docs_redirect():
+                return RedirectResponse(url=docs_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+        if redoc_url and redoc_url != f"{settings.API_V1_PREFIX}/redoc":
+            @app.get(f"{settings.API_V1_PREFIX}/redoc", include_in_schema=False)
+            def legacy_redoc_redirect():
+                return RedirectResponse(url=redoc_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+        if openapi_url and openapi_url != f"{settings.API_V1_PREFIX}/openapi.json":
+            @app.get(f"{settings.API_V1_PREFIX}/openapi.json", include_in_schema=False)
+            def legacy_openapi_redirect():
+                return RedirectResponse(url=openapi_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+    # --------------------------------------------------------------------------
     # API Routers
     # --------------------------------------------------------------------------
     # Expose /health at root level for load balancers / simple health checks
@@ -161,3 +224,12 @@ def create_application() -> FastAPI:
 
 
 app = create_application()
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("PORT", settings.PORT))
+    host = os.environ.get("HOST", settings.HOST)
+    logger.info("Starting %s via CLI on %s:%d", settings.APP_NAME, host, port)
+    uvicorn.run("app.main:app", host=host, port=port, reload=False)

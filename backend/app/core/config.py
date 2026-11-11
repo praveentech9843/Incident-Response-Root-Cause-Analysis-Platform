@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import json
@@ -22,6 +22,12 @@ class Settings(BaseSettings):
 
     # API Prefix
     API_V1_PREFIX: str = "/api/v1"
+
+    # API Documentation Settings
+    ENABLE_DOCS: bool = True
+    DOCS_URL: Optional[str] = "/docs"
+    OPENAPI_URL: Optional[str] = "/openapi.json"
+    REDOC_URL: Optional[str] = "/redoc"
 
     # Database
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/incident_platform_dev"
@@ -84,6 +90,15 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
         "http://localhost:3000",
     ]
+
+    @field_validator("DATABASE_URL", "TEST_DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_database_url(cls, v: Union[str, None]) -> str:
+        if isinstance(v, str):
+            # Normalize legacy or cloud postgres:// scheme to postgresql:// for SQLAlchemy 1.4+ / 2.0
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql://", 1)
+        return v or ""
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

@@ -3,11 +3,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from app.core.config import settings
 
+# Ensure database URL uses valid SQLAlchemy dialect scheme
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
 # Engine configuration with dialect-specific options
 connect_args = {}
 engine_kwargs = {}
 
-if settings.DATABASE_URL.startswith("sqlite"):
+if database_url.startswith("sqlite"):
     connect_args["check_same_thread"] = False
 else:
     engine_kwargs.update(
@@ -20,7 +25,7 @@ else:
     )
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    database_url,
     connect_args=connect_args,
     **engine_kwargs,
 )

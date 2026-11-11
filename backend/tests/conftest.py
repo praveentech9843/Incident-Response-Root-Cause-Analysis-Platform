@@ -1,7 +1,14 @@
 import os
 import sys
+from pathlib import Path
 from typing import Generator
 import pytest
+from dotenv import load_dotenv
+
+# Load backend/.env if available
+_backend_env = Path(__file__).resolve().parent.parent / ".env"
+if _backend_env.exists():
+    load_dotenv(_backend_env)
 
 # Ensure test environment variables BEFORE importing app, settings, or database engine
 os.environ["APP_ENV"] = "test"
@@ -20,6 +27,8 @@ if not test_db_url:
         test_db_url = current_db_url.replace(DEV_DB_NAME, TEST_DB_NAME)
     elif TEST_DB_NAME in current_db_url:
         test_db_url = current_db_url
+    elif "neondb" in current_db_url and "neondb_test" not in current_db_url:
+        test_db_url = current_db_url.replace("/neondb?", "/neondb_test?").replace("/neondb", "/neondb_test")
     else:
         test_db_url = DEFAULT_TEST_DB_URL
 
@@ -42,7 +51,7 @@ def _ensure_test_database_ready() -> None:
     from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
     db_url = settings.DATABASE_URL
-    if "postgresql" in db_url and TEST_DB_NAME in db_url:
+    if "postgresql" in db_url and (TEST_DB_NAME in db_url or "test" in db_url):
         try:
             # Check if we can connect directly
             conn = psycopg2.connect(db_url)
@@ -54,7 +63,8 @@ def _ensure_test_database_ready() -> None:
                 mconn = psycopg2.connect(maint_url)
                 mconn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
                 mcur = mconn.cursor()
-                mcur.execute(f"CREATE DATABASE {TEST_DB_NAME};")
+                target_db = "neondb_test" if "neondb" in db_url else TEST_DB_NAME
+                mcur.execute(f"CREATE DATABASE {target_db};")
                 mconn.close()
             except Exception:
                 pass
