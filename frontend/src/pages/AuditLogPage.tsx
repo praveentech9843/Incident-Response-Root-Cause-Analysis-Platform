@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { fetchAuditLogs, type AuditLogItem } from "../services/api";
+import { History, Search, RefreshCw, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 
 export const AuditLogPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
@@ -53,9 +54,10 @@ export const AuditLogPage: React.FC = () => {
 
   return (
     <div className="tab-page-container">
+      {/* Page Header */}
       <div className="page-header-row">
         <div>
-          <h2>Security & Compliance Audit Trail</h2>
+          <h2 className="page-title">Security & Compliance Audit Trail</h2>
           <p className="page-subtitle">
             Phase 8 Append-Only Security Audit Log — Tracking logins, incident assignments, resolutions, and system changes.
           </p>
@@ -65,49 +67,73 @@ export const AuditLogPage: React.FC = () => {
           className="btn btn-secondary btn-sm"
           onClick={() => loadLogs(page)}
           disabled={loading}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
         >
+          <RefreshCw size={14} className={loading ? "spin" : ""} />
           {loading ? "Refreshing..." : "Refresh Audit Log"}
         </button>
       </div>
 
       {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
-      {/* Filters */}
-      <div className="card" style={{ marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <div>
-          <label style={{ fontSize: "0.8rem", color: "#94a3b8", display: "block", marginBottom: 4 }}>Filter Action</label>
+      {/* Filter Toolbar Card */}
+      <div
+        className="card"
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          gap: 16,
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          padding: "16px 20px",
+        }}
+      >
+        <div style={{ flex: "1 1 220px" }}>
+          <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569", display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+            <Filter size={13} /> Filter by Action
+          </label>
           <input
             type="text"
-            placeholder="e.g. USER_LOGIN or INCIDENT_RESOLVED"
+            placeholder="e.g. LOGIN, INCIDENT_ASSIGN, USER_REGISTER"
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #334155", background: "#0f172a", color: "#f8fafc", fontSize: "0.85rem" }}
+            className="input-field"
+            style={{ width: "100%", padding: "7px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: "0.85rem" }}
           />
         </div>
 
-        <div>
-          <label style={{ fontSize: "0.8rem", color: "#94a3b8", display: "block", marginBottom: 4 }}>Filter Entity</label>
+        <div style={{ flex: "1 1 220px" }}>
+          <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569", display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+            <Search size={13} /> Filter by Entity
+          </label>
           <input
             type="text"
-            placeholder="e.g. incident or user"
+            placeholder="e.g. USER, INCIDENT, ALERT_RULE"
             value={entityFilter}
             onChange={(e) => setEntityFilter(e.target.value)}
-            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #334155", background: "#0f172a", color: "#f8fafc", fontSize: "0.85rem" }}
+            className="input-field"
+            style={{ width: "100%", padding: "7px 12px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#ffffff", color: "#0f172a", fontSize: "0.85rem" }}
           />
         </div>
 
-        <div style={{ marginLeft: "auto", fontSize: "0.85rem", color: "#94a3b8", alignSelf: "flex-end" }}>
-          Total Logged Entries: <strong>{total}</strong>
+        <div style={{ marginLeft: "auto", fontSize: "0.85rem", color: "#64748b", alignSelf: "center" }}>
+          Total Logged Entries: <strong style={{ color: "#0f172a", fontSize: "1rem" }}>{total}</strong>
         </div>
       </div>
 
-      {/* Audit Log Table */}
+      {/* Audit Log Table Card */}
       <div className="card">
         {logs.length === 0 ? (
-          <p className="text-muted">No audit log records found.</p>
+          <div className="empty-state" style={{ padding: "3rem 1rem" }}>
+            <History size={40} style={{ color: "#94a3b8", marginBottom: 8 }} />
+            <p className="empty-title">No Audit Records Found</p>
+            <p className="empty-subtitle">
+              {actionFilter || entityFilter ? "No records match the applied filters." : "The append-only security log is currently clear."}
+            </p>
+          </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="logs-table" style={{ width: "100%", fontSize: "0.82rem" }}>
+          <div className="table-responsive">
+            <table className="logs-table" style={{ width: "100%", fontSize: "0.825rem" }}>
               <thead>
                 <tr>
                   <th>ID</th>
@@ -123,26 +149,54 @@ export const AuditLogPage: React.FC = () => {
               <tbody>
                 {logs.map((log) => (
                   <tr key={log.id}>
-                    <td>#{log.id}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>{new Date(log.created_at).toLocaleString()}</td>
-                    <td>
-                      <strong style={{ color: "#38bdf8" }}>{log.actor}</strong>
+                    <td className="log-id">#{log.id}</td>
+                    <td style={{ whiteSpace: "nowrap", color: "#475569" }}>
+                      {new Date(log.created_at).toLocaleString()}
                     </td>
                     <td>
-                      <code style={{ color: "#f59e0b", background: "#0f172a", padding: "2px 5px", borderRadius: 4 }}>
+                      <strong style={{ color: "#1d4ed8" }}>{log.actor}</strong>
+                    </td>
+                    <td>
+                      <code
+                        style={{
+                          color: "#1e40af",
+                          background: "#eff6ff",
+                          border: "1px solid #dbeafe",
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                          fontWeight: 600,
+                          fontSize: "0.775rem",
+                        }}
+                      >
                         {log.action}
                       </code>
                     </td>
-                    <td>{log.target_entity}</td>
+                    <td>
+                      <span className="badge badge-txt">{log.target_entity}</span>
+                    </td>
                     <td>{log.target_id || "—"}</td>
                     <td>
-                      <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                      <span style={{ fontSize: "0.75rem", color: "#64748b", fontFamily: "var(--font-mono)" }}>
                         {log.request_id ? log.request_id.slice(0, 8) + "..." : "—"}
                       </span>
                     </td>
                     <td>
                       {log.metadata && Object.keys(log.metadata).length > 0 ? (
-                        <code style={{ fontSize: "0.75rem", color: "#cbd5e1" }}>
+                        <code
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "#334155",
+                            background: "#f1f5f9",
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            maxWidth: "280px",
+                            display: "inline-block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                          title={JSON.stringify(log.metadata)}
+                        >
                           {JSON.stringify(log.metadata)}
                         </code>
                       ) : (
@@ -158,16 +212,26 @@ export const AuditLogPage: React.FC = () => {
 
         {/* Pagination controls */}
         {total > 50 && (
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 16,
+              paddingTop: 12,
+              borderTop: "1px solid #e2e8f0",
+            }}
+          >
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               disabled={page <= 1}
               onClick={() => loadLogs(page - 1)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
             >
-              Previous
+              <ChevronLeft size={14} /> Previous
             </button>
-            <span style={{ fontSize: "0.85rem", color: "#94a3b8" }}>
+            <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
               Page {page} of {Math.ceil(total / 50)}
             </span>
             <button
@@ -175,8 +239,9 @@ export const AuditLogPage: React.FC = () => {
               className="btn btn-secondary btn-sm"
               disabled={page * 50 >= total}
               onClick={() => loadLogs(page + 1)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
             >
-              Next
+              Next <ChevronRight size={14} />
             </button>
           </div>
         )}

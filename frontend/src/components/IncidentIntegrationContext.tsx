@@ -3,6 +3,7 @@ import {
   fetchIntegrationStatus,
   type IntegrationsStatusResponse,
 } from "../services/api";
+import { Workflow, GitBranch, Cpu, Activity, CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
 
 interface IncidentIntegrationContextProps {
   serviceName: string;
@@ -30,35 +31,77 @@ export const IncidentIntegrationContext: React.FC<IncidentIntegrationContextProp
     };
   }, []);
 
+  const getStatusBadge = (state?: string) => {
+    if (state === "CONNECTED") {
+      return (
+        <span className="badge badge-status-success" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <CheckCircle2 size={12} /> Connected
+        </span>
+      );
+    }
+    if (state === "NOT_CONNECTED") {
+      return (
+        <span className="badge badge-status-partial" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <HelpCircle size={12} /> Not Connected
+        </span>
+      );
+    }
+    return (
+      <span className="badge badge-status-other" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <AlertTriangle size={12} /> Unavailable
+      </span>
+    );
+  };
+
   return (
-    <div className="card" style={{ marginTop: 16, borderLeft: "4px solid #3b82f6" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+    <div className="card" style={{ marginTop: 16, borderLeft: "4px solid var(--primary, #1d4ed8)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div>
-          <h4 style={{ margin: 0, fontSize: "0.95rem" }}>
+          <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary, #0f172a)" }}>
             External Telemetry & Environment Context (Phase 8)
           </h4>
-          <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>
-            Target Service: <strong>{serviceName || "All Services"}</strong>
+          <span style={{ fontSize: "0.78rem", color: "var(--text-secondary, #64748b)" }}>
+            Target Service Scope: <strong style={{ color: "var(--primary, #1d4ed8)" }}>{serviceName || "All Services"}</strong>
           </span>
         </div>
-        <span style={{ fontSize: "0.72rem", background: "#1e293b", padding: "2px 8px", borderRadius: 4, color: "#94a3b8" }}>
+        <span
+          style={{
+            fontSize: "0.72rem",
+            background: "#eff6ff",
+            border: "1px solid #dbeafe",
+            padding: "3px 10px",
+            borderRadius: 6,
+            color: "#1d4ed8",
+            fontWeight: 600,
+          }}
+        >
           Grounding: Strictly Real Telemetry
         </span>
       </div>
 
       {loading ? (
-        <p className="text-muted" style={{ fontSize: "0.85rem" }}>Checking external telemetry providers...</p>
+        <div style={{ padding: "1rem", textAlign: "center", color: "#64748b", fontSize: "0.85rem" }}>
+          Checking external telemetry providers...
+        </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
           {/* Deployment Context */}
-          <div style={{ background: "#0f172a", padding: "10px", borderRadius: 6, border: "1px solid #334155" }}>
+          <div
+            style={{
+              background: "#f8fafc",
+              padding: "12px",
+              borderRadius: 8,
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#f8fafc" }}>CI/CD Deployments</span>
-              <span style={{ fontSize: "0.68rem", color: integrations?.integrations?.deployment?.state === "CONNECTED" ? "#10b981" : "#f59e0b" }}>
-                {integrations?.integrations?.deployment?.state || "NOT_CONNECTED"}
+              <span style={{ fontSize: "0.825rem", fontWeight: 600, color: "#0f172a", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Workflow size={14} color="#1d4ed8" /> CI/CD Deployments
               </span>
+              {getStatusBadge(integrations?.integrations?.deployment?.state)}
             </div>
-            <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "6px 0 0" }}>
+            <p style={{ fontSize: "0.775rem", color: "#64748b", margin: "8px 0 0" }}>
               {integrations?.integrations?.deployment?.state === "CONNECTED"
                 ? "Recent release correlation available"
                 : "[UNAVAILABLE] CI/CD provider not connected"}
@@ -66,14 +109,22 @@ export const IncidentIntegrationContext: React.FC<IncidentIntegrationContextProp
           </div>
 
           {/* Git Source Control Context */}
-          <div style={{ background: "#0f172a", padding: "10px", borderRadius: 6, border: "1px solid #334155" }}>
+          <div
+            style={{
+              background: "#f8fafc",
+              padding: "12px",
+              borderRadius: 8,
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#f8fafc" }}>Git Commits</span>
-              <span style={{ fontSize: "0.68rem", color: integrations?.integrations?.source_control?.state === "CONNECTED" ? "#10b981" : "#f59e0b" }}>
-                {integrations?.integrations?.source_control?.state || "NOT_CONNECTED"}
+              <span style={{ fontSize: "0.825rem", fontWeight: 600, color: "#0f172a", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <GitBranch size={14} color="#0284c7" /> Git Commits
               </span>
+              {getStatusBadge(integrations?.integrations?.source_control?.state)}
             </div>
-            <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "6px 0 0" }}>
+            <p style={{ fontSize: "0.775rem", color: "#64748b", margin: "8px 0 0" }}>
               {integrations?.integrations?.source_control?.state === "CONNECTED"
                 ? "Recent repository commits tracked"
                 : "[UNAVAILABLE] Git repository not connected"}
@@ -81,29 +132,45 @@ export const IncidentIntegrationContext: React.FC<IncidentIntegrationContextProp
           </div>
 
           {/* Infrastructure Context */}
-          <div style={{ background: "#0f172a", padding: "10px", borderRadius: 6, border: "1px solid #334155" }}>
+          <div
+            style={{
+              background: "#f8fafc",
+              padding: "12px",
+              borderRadius: 8,
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#f8fafc" }}>Kubernetes Pods</span>
-              <span style={{ fontSize: "0.68rem", color: integrations?.integrations?.infrastructure?.state === "CONNECTED" ? "#10b981" : "#f59e0b" }}>
-                {integrations?.integrations?.infrastructure?.state || "NOT_CONNECTED"}
+              <span style={{ fontSize: "0.825rem", fontWeight: 600, color: "#0f172a", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Cpu size={14} color="#16a34a" /> Kubernetes Pods
               </span>
+              {getStatusBadge(integrations?.integrations?.infrastructure?.state)}
             </div>
-            <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "6px 0 0" }}>
+            <p style={{ fontSize: "0.775rem", color: "#64748b", margin: "8px 0 0" }}>
               {integrations?.integrations?.infrastructure?.state === "CONNECTED"
                 ? "Pod lifecycle & restart health monitored"
-                : "[UNAVAILABLE] Cluster cluster provider not connected"}
+                : "[UNAVAILABLE] Cluster provider not connected"}
             </p>
           </div>
 
           {/* Prometheus Metrics Context */}
-          <div style={{ background: "#0f172a", padding: "10px", borderRadius: 6, border: "1px solid #334155" }}>
+          <div
+            style={{
+              background: "#f8fafc",
+              padding: "12px",
+              borderRadius: 8,
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#f8fafc" }}>Prometheus Metrics</span>
-              <span style={{ fontSize: "0.68rem", color: integrations?.integrations?.metrics?.state === "CONNECTED" ? "#10b981" : "#f59e0b" }}>
-                {integrations?.integrations?.metrics?.state || "NOT_CONNECTED"}
+              <span style={{ fontSize: "0.825rem", fontWeight: 600, color: "#0f172a", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Activity size={14} color="#d97706" /> Prometheus Metrics
               </span>
+              {getStatusBadge(integrations?.integrations?.metrics?.state)}
             </div>
-            <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "6px 0 0" }}>
+            <p style={{ fontSize: "0.775rem", color: "#64748b", margin: "8px 0 0" }}>
               {integrations?.integrations?.metrics?.state === "CONNECTED"
                 ? "Time-series CPU, memory, error rates queried"
                 : "[UNAVAILABLE] Prometheus endpoint not configured"}

@@ -20,7 +20,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #f0f7ff 0%, #ffffff 50%, #f8fafc 100%)",
+          backgroundColor: "var(--bg-canvas, #f3f6fc)",
           gap: "1rem",
           color: "#0f172a",
         }}

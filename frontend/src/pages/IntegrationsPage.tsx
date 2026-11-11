@@ -8,6 +8,7 @@ import {
   type IntegrationsStatusResponse,
   type IntegrationStatusItem,
 } from "../services/api";
+import { Workflow, RefreshCw, CheckCircle2, HelpCircle, AlertTriangle, Terminal, X } from "lucide-react";
 
 export const IntegrationsPage: React.FC = () => {
   const [statusData, setStatusData] = useState<IntegrationsStatusResponse | null>(null);
@@ -124,9 +125,10 @@ export const IntegrationsPage: React.FC = () => {
 
   return (
     <div className="tab-page-container">
+      {/* Page Header */}
       <div className="page-header-row">
         <div>
-          <h2>External Integrations & Observability</h2>
+          <h2 className="page-title">External Integrations & Observability</h2>
           <p className="page-subtitle">
             Phase 8 Production Integration Architecture — Strictly real connections with explicit NOT_CONNECTED states.
           </p>
@@ -136,37 +138,66 @@ export const IntegrationsPage: React.FC = () => {
           className="btn btn-secondary btn-sm"
           onClick={loadStatus}
           disabled={loading}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
         >
+          <RefreshCw size={14} className={loading ? "spin" : ""} />
           {loading ? "Refreshing..." : "Refresh Status"}
         </button>
       </div>
 
       {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
-      {/* Summary Row */}
+      {/* Summary KPI Row */}
       {statusData && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 20 }}>
-          <div className="card" style={{ padding: "12px 16px" }}>
-            <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>Total Providers</span>
-            <div style={{ fontSize: "1.4rem", fontWeight: 700, marginTop: 4 }}>{statusData.summary.total}</div>
+        <div className="kpi-grid" style={{ marginBottom: 20 }}>
+          <div className="card kpi-card">
+            <div className="kpi-header">
+              <span className="kpi-title">Total Providers</span>
+              <div className="kpi-icon-box" style={{ background: "#eff6ff", color: "#1d4ed8" }}>
+                <Workflow size={18} />
+              </div>
+            </div>
+            <div className="kpi-value">{statusData.summary.total}</div>
+            <span className="kpi-hint">External services</span>
           </div>
-          <div className="card" style={{ padding: "12px 16px" }}>
-            <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>Connected</span>
-            <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#10b981", marginTop: 4 }}>
+
+          <div className="card kpi-card">
+            <div className="kpi-header">
+              <span className="kpi-title">Connected</span>
+              <div className="kpi-icon-box" style={{ background: "#f0fdf4", color: "#16a34a" }}>
+                <CheckCircle2 size={18} />
+              </div>
+            </div>
+            <div className="kpi-value" style={{ color: "#16a34a" }}>
               {statusData.summary.connected}
             </div>
+            <span className="kpi-hint">Healthy telemetry sources</span>
           </div>
-          <div className="card" style={{ padding: "12px 16px" }}>
-            <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>Not Connected</span>
-            <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#f59e0b", marginTop: 4 }}>
+
+          <div className="card kpi-card">
+            <div className="kpi-header">
+              <span className="kpi-title">Not Connected</span>
+              <div className="kpi-icon-box" style={{ background: "#fffbeb", color: "#b45309" }}>
+                <HelpCircle size={18} />
+              </div>
+            </div>
+            <div className="kpi-value" style={{ color: "#d97706" }}>
               {statusData.summary.not_connected}
             </div>
+            <span className="kpi-hint">Optional provider hooks</span>
           </div>
-          <div className="card" style={{ padding: "12px 16px" }}>
-            <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>Unavailable</span>
-            <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#ef4444", marginTop: 4 }}>
+
+          <div className="card kpi-card">
+            <div className="kpi-header">
+              <span className="kpi-title">Unavailable</span>
+              <div className="kpi-icon-box" style={{ background: "#fef2f2", color: "#dc2626" }}>
+                <AlertTriangle size={18} />
+              </div>
+            </div>
+            <div className="kpi-value" style={{ color: "#dc2626" }}>
               {statusData.summary.unavailable}
             </div>
+            <span className="kpi-hint">Unreachable endpoints</span>
           </div>
         </div>
       )}
@@ -175,27 +206,47 @@ export const IntegrationsPage: React.FC = () => {
       {statusData && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 16 }}>
           {Object.entries(statusData.integrations).map(([key, item]: [string, IntegrationStatusItem]) => (
-            <div key={key} className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div
+              key={key}
+              className="card"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                borderTop: "3px solid var(--primary, #1d4ed8)",
+              }}
+            >
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                   <div>
-                    <h4 style={{ margin: 0, textTransform: "capitalize" }}>{key.replace("_", " ")}</h4>
+                    <h4 style={{ margin: 0, textTransform: "capitalize", fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>
+                      {key.replace("_", " ")}
+                    </h4>
                     <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Provider: {item.provider}</span>
                   </div>
                   <span className={getBadgeClass(item.state)}>
                     {item.state}
                   </span>
                 </div>
-                <p style={{ fontSize: "0.85rem", color: "#cbd5e1", margin: "10px 0" }}>
+                <p style={{ fontSize: "0.85rem", color: "#475569", margin: "10px 0" }}>
                   {item.message}
                 </p>
                 {item.details && Object.keys(item.details).length > 0 && (
-                  <div style={{ fontSize: "0.75rem", background: "#0f172a", padding: "8px", borderRadius: 6, margin: "8px 0" }}>
-                    <div style={{ color: "#94a3b8", marginBottom: 4, fontWeight: 600 }}>Configuration Metadata:</div>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      padding: "10px",
+                      borderRadius: 8,
+                      margin: "10px 0",
+                    }}
+                  >
+                    <div style={{ color: "#334155", marginBottom: 6, fontWeight: 600 }}>Configuration Metadata:</div>
                     {Object.entries(item.details).map(([k, v]) => (
-                      <div key={k} style={{ display: "flex", justifyContent: "space-between", color: "#cbd5e1" }}>
-                        <span>{k}:</span>
-                        <span>{String(v)}</span>
+                      <div key={k} style={{ display: "flex", justifyContent: "space-between", color: "#475569", padding: "2px 0" }}>
+                        <span style={{ fontFamily: "var(--font-mono)" }}>{k}:</span>
+                        <span style={{ fontWeight: 500 }}>{String(v)}</span>
                       </div>
                     ))}
                   </div>
@@ -203,7 +254,7 @@ export const IntegrationsPage: React.FC = () => {
               </div>
 
               {/* Action Probes */}
-              <div style={{ borderTop: "1px solid #334155", paddingTop: 10, marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 12, marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
                 {key === "deployment" && (
                   <button type="button" className="btn btn-secondary btn-sm" onClick={runDeploymentProbe}>
                     Query Deployments
@@ -232,11 +283,14 @@ export const IntegrationsPage: React.FC = () => {
 
       {/* Interactive Probe Output Modal / Drawer */}
       {activeTest && (
-        <div className="card" style={{ marginTop: 24, border: "1px solid #3b82f6" }}>
+        <div className="card" style={{ marginTop: 24, border: "1px solid #bfdbfe", background: "#f8fafc" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h4 style={{ margin: 0, color: "#60a5fa" }}>
-              Live Provider Probe Output: {activeTest}
-            </h4>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Terminal size={18} color="#1d4ed8" />
+              <h4 style={{ margin: 0, color: "#1d4ed8", fontSize: "0.95rem", fontWeight: 700 }}>
+                Live Provider Probe Output: {activeTest}
+              </h4>
+            </div>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -244,14 +298,26 @@ export const IntegrationsPage: React.FC = () => {
                 setActiveTest(null);
                 setTestResult(null);
               }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
             >
-              Close Output
+              <X size={14} /> Close Output
             </button>
           </div>
           {testLoading ? (
-            <p className="text-muted">Contacting provider endpoint...</p>
+            <p className="text-muted" style={{ padding: "1rem 0" }}>Contacting provider endpoint...</p>
           ) : (
-            <pre className="response-output" style={{ maxHeight: 260, overflowY: "auto" }}>
+            <pre
+              className="response-output"
+              style={{
+                maxHeight: 260,
+                overflowY: "auto",
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                color: "#0f172a",
+                padding: "12px",
+                borderRadius: 8,
+              }}
+            >
               {JSON.stringify(testResult, null, 2)}
             </pre>
           )}

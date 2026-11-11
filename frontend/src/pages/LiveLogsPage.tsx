@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { uploadLog, fetchLogs, parseLog } from "../services/api";
 import type { LogListItem, LogUploadResponse, ParseLogResponse } from "../services/api";
+import { FileText, UploadCloud, Database, HardDrive, FileCode } from "lucide-react";
 
 const ALLOWED_EXTENSIONS = [".log", ".txt", ".json"];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
@@ -261,6 +262,53 @@ export const LiveLogsPage: React.FC = () => {
         </p>
       </div>
 
+      {/* Top KPI Metrics Row */}
+      <div className="kpi-grid" style={{ marginBottom: 24 }}>
+        <div className="card kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-title">Ingested Raw Logs</span>
+            <div className="kpi-icon-box" style={{ background: "#eff6ff", color: "#1d4ed8" }}>
+              <FileText size={18} />
+            </div>
+          </div>
+          <div className="kpi-value">{logs.length}</div>
+          <span className="kpi-hint">Persisted in PostgreSQL</span>
+        </div>
+
+        <div className="card kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-title">Max File Size</span>
+            <div className="kpi-icon-box" style={{ background: "#f0fdf4", color: "#16a34a" }}>
+              <HardDrive size={18} />
+            </div>
+          </div>
+          <div className="kpi-value">10 MB</div>
+          <span className="kpi-hint">Per uploaded log payload</span>
+        </div>
+
+        <div className="card kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-title">Supported Formats</span>
+            <div className="kpi-icon-box" style={{ background: "#f0f9ff", color: "#0284c7" }}>
+              <FileCode size={18} />
+            </div>
+          </div>
+          <div className="kpi-value" style={{ fontSize: "1.3rem", fontWeight: 700 }}>.LOG, .TXT, .JSON</div>
+          <span className="kpi-hint">Standard & structured text</span>
+        </div>
+
+        <div className="card kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-title">Storage Backend</span>
+            <div className="kpi-icon-box" style={{ background: "#fef3c7", color: "#b45309" }}>
+              <Database size={18} />
+            </div>
+          </div>
+          <div className="kpi-value" style={{ fontSize: "1.3rem", fontWeight: 700 }}>PostgreSQL</div>
+          <span className="kpi-hint">ACID relational storage</span>
+        </div>
+      </div>
+
       <div className="ingestion-grid">
         {/* Upload Form Card */}
         <section className="card upload-card">
@@ -284,11 +332,7 @@ export const LiveLogsPage: React.FC = () => {
               />
 
               <div className="dropzone-icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+                <UploadCloud size={38} />
               </div>
 
               {selectedFile ? (
@@ -445,12 +489,11 @@ export const LiveLogsPage: React.FC = () => {
 
           {!logsLoading && !logsError && logs.length === 0 && (
             <div className="empty-state">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M7 8h10M7 12h10M7 16h6" />
-              </svg>
-              <p className="empty-title">No log records yet</p>
-              <p className="empty-subtitle">Upload a .log, .txt, or .json file above to persist real telemetry.</p>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#eff6ff", color: "#1d4ed8", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                <FileText size={24} />
+              </div>
+              <p className="empty-title">Clean Environment • No Ingested Logs</p>
+              <p className="empty-subtitle">Upload a .log, .txt, or .json file using the dropzone on the left to ingest real telemetry into PostgreSQL.</p>
             </div>
           )}
 
