@@ -47,6 +47,12 @@ def test_sqlalchemy_engine_initialization_with_settings():
         ("postgresql+psycopg://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
         ("postgres+psycopg://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
         ("postgres+psycopg2://user:secret123@ep-test.neon.tech/neondb", "postgresql+psycopg2://"),
+        ("  postgresql+psycopg://user:secret123@ep-test.neon.tech/neondb  ", "postgresql://"),
+        ('"postgresql+psycopg://user:secret123@ep-test.neon.tech/neondb"', "postgresql://"),
+        ("'postgresql+psycopg://user:secret123@ep-test.neon.tech/neondb'", "postgresql://"),
+        ("postgresql+psycopg3://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
+        ("postgres+psycopg3://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
+        ("POSTGRESQL+PSYCOPG://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
     ],
 )
 def test_driver_selection_always_resolves_to_psycopg2(input_url: str, expected_prefix: str):

@@ -1,7 +1,8 @@
+import json
+import re
 from typing import List, Optional, Union
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import json
 
 
 def normalize_database_url(url: Union[str, None]) -> str:
@@ -10,9 +11,12 @@ def normalize_database_url(url: Union[str, None]) -> str:
     the psycopg2 driver and prevents driver mismatch errors (e.g. Missing psycopg v3).
 
     Handles:
+    - Stripping surrounding whitespace, newlines, and single/double quotes
     - postgres:// -> postgresql:// (legacy/Heroku/Render cloud format)
     - postgresql+psycopg:// -> postgresql:// (prevents ModuleNotFoundError: No module named 'psycopg')
     - postgres+psycopg:// -> postgresql://
+    - postgresql+psycopg3:// -> postgresql://
+    - postgres+psycopg3:// -> postgresql://
     - postgres+psycopg2:// -> postgresql+psycopg2://
     Preserves:
     - postgresql:// -> postgresql:// (defaults to psycopg2 in SQLAlchemy)
@@ -21,15 +25,35 @@ def normalize_database_url(url: Union[str, None]) -> str:
     """
     if not url or not isinstance(url, str):
         return ""
-    if url.startswith("postgresql+psycopg://"):
-        return url.replace("postgresql+psycopg://", "postgresql://", 1)
-    if url.startswith("postgres+psycopg://"):
-        return url.replace("postgres+psycopg://", "postgresql://", 1)
-    if url.startswith("postgres+psycopg2://"):
-        return url.replace("postgres+psycopg2://", "postgresql+psycopg2://", 1)
-    if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql://", 1)
-    return url
+
+    # Strip surrounding whitespace, newlines, and quotes
+    cleaned = url.strip().strip("'\"").strip()
+    if not cleaned:
+        return ""
+
+    if "://" in cleaned:
+        scheme, rest = cleaned.split("://", 1)
+        scheme_lower = scheme.lower()
+
+        # Handle psycopg v3 driver variants -> normalize to postgresql://
+        # so SQLAlchemy exclusively selects psycopg2
+        if scheme_lower in (
+            "postgresql+psycopg",
+            "postgres+psycopg",
+            "postgresql+psycopg3",
+            "postgres+psycopg3",
+        ):
+            return f"postgresql://{rest}"
+
+        # Handle legacy postgres scheme
+        if scheme_lower == "postgres":
+            return f"postgresql://{rest}"
+        if scheme_lower == "postgres+psycopg2":
+            return f"postgresql+psycopg2://{rest}"
+
+        return f"{scheme}://{rest}"
+
+    return cleaned
 
 
 class Settings(BaseSettings):

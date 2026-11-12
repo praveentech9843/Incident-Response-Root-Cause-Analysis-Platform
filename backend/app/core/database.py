@@ -4,7 +4,12 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from app.core.config import normalize_database_url, settings
 
 # Ensure database URL uses valid SQLAlchemy dialect scheme selecting psycopg2
+# Normalization occurs immediately before engine creation
 database_url = normalize_database_url(settings.DATABASE_URL)
+
+# Guard against any unstripped psycopg v3 dialect variants
+if "+psycopg" in database_url and "+psycopg2" not in database_url:
+    database_url = normalize_database_url(database_url)
 
 # Engine configuration with dialect-specific options
 connect_args = {}

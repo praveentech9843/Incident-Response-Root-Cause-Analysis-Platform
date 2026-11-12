@@ -51,6 +51,9 @@ def test_postgresql_and_psycopg_driver_url_handling():
     - postgresql:// is preserved and resolves to psycopg2
     - postgresql+psycopg2:// is preserved and resolves to psycopg2
     - postgresql+psycopg:// is normalized to postgresql:// to prevent ModuleNotFoundError: No module named 'psycopg'
+    - Handles leading/trailing whitespace, newlines, and surrounding quotes
+    - Handles postgresql+psycopg3://, postgres+psycopg://, postgres+psycopg3://
+    - Credential masking protects database secrets in logs and assertions
     """
     from app.core.config import normalize_database_url
     from app.core.test_safety import mask_database_credentials
@@ -71,8 +74,45 @@ def test_postgresql_and_psycopg_driver_url_handling():
     norm_psycopg3 = normalize_database_url(url_psycopg3)
     assert norm_psycopg3.startswith("postgresql://")
     assert "+psycopg:" not in norm_psycopg3
+    assert "+psycopg/" not in norm_psycopg3
 
-    # 4. Credential masking ensures passwords are not exposed
+    # 4. Whitespace and newlines
+    url_whitespace = "   \n  postgresql+psycopg://myuser:mypassword@ep-cool.neon.tech/neondb?sslmode=require  \t  "
+    norm_whitespace = normalize_database_url(url_whitespace)
+    assert norm_whitespace.startswith("postgresql://")
+    assert "+psycopg" not in norm_whitespace
+
+    # 5. Surrounding double quotes
+    url_dquotes = '"postgresql+psycopg://myuser:mypassword@ep-cool.neon.tech/neondb?sslmode=require"'
+    norm_dquotes = normalize_database_url(url_dquotes)
+    assert norm_dquotes.startswith("postgresql://")
+    assert "+psycopg" not in norm_dquotes
+
+    # 6. Surrounding single quotes
+    url_squotes = "'postgresql+psycopg://myuser:mypassword@ep-cool.neon.tech/neondb?sslmode=require'"
+    norm_squotes = normalize_database_url(url_squotes)
+    assert norm_squotes.startswith("postgresql://")
+    assert "+psycopg" not in norm_squotes
+
+    # 7. postgresql+psycopg3://
+    url_v3 = "postgresql+psycopg3://myuser:mypassword@ep-cool.neon.tech/neondb?sslmode=require"
+    norm_v3 = normalize_database_url(url_v3)
+    assert norm_v3.startswith("postgresql://")
+    assert "+psycopg" not in norm_v3
+
+    # 8. postgres+psycopg3://
+    url_pg_v3 = "postgres+psycopg3://myuser:mypassword@ep-cool.neon.tech/neondb?sslmode=require"
+    norm_pg_v3 = normalize_database_url(url_pg_v3)
+    assert norm_pg_v3.startswith("postgresql://")
+    assert "+psycopg" not in norm_pg_v3
+
+    # 9. Case insensitivity
+    url_upper = "POSTGRESQL+PSYCOPG://myuser:mypassword@ep-cool.neon.tech/neondb?sslmode=require"
+    norm_upper = normalize_database_url(url_upper)
+    assert norm_upper.startswith("postgresql://")
+    assert "+psycopg" not in norm_upper
+
+    # 10. Credential masking ensures passwords are not exposed
     masked = mask_database_credentials(url_pg)
     assert "mypassword" not in masked
     assert "myuser:***@" in masked
