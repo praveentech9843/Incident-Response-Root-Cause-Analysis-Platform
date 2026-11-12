@@ -10,7 +10,7 @@ backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.core.config import settings
+from app.core.config import normalize_database_url, settings
 from app.core.database import Base
 import app.models  # noqa: F401 - ensure all models are registered on Base.metadata
 
@@ -25,7 +25,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Set SQLAlchemy database URL dynamically from application settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", normalize_database_url(settings.DATABASE_URL))
 
 # Model metadata for 'autogenerate' support
 target_metadata = Base.metadata
@@ -62,7 +62,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
     """
     configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    configuration["sqlalchemy.url"] = normalize_database_url(settings.DATABASE_URL)
 
     connectable = engine_from_config(
         configuration,

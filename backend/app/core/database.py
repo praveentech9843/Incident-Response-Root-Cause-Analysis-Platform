@@ -1,12 +1,10 @@
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
-from app.core.config import settings
+from app.core.config import normalize_database_url, settings
 
-# Ensure database URL uses valid SQLAlchemy dialect scheme
-database_url = settings.DATABASE_URL
-if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+# Ensure database URL uses valid SQLAlchemy dialect scheme selecting psycopg2
+database_url = normalize_database_url(settings.DATABASE_URL)
 
 # Engine configuration with dialect-specific options
 connect_args = {}

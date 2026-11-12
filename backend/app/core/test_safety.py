@@ -31,6 +31,14 @@ def is_safe_test_database(db_url: Optional[str] = None) -> bool:
     return True
 
 
+def mask_database_credentials(url: str) -> str:
+    """Masks user credentials in database URLs for safe logging and error reporting."""
+    if not url:
+        return ""
+    import re
+    return re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", url)
+
+
 def assert_safe_test_environment(db_url: Optional[str] = None) -> None:
     """
     Safety guard: Verifies that tests are strictly running against a dedicated test database.
@@ -40,14 +48,16 @@ def assert_safe_test_environment(db_url: Optional[str] = None) -> None:
     target_url = (db_url or settings.DATABASE_URL or "").lower()
 
     if DEV_DATABASE_NAME in target_url:
+        safe_url = mask_database_credentials(target_url)
         raise UnsafeTestDatabaseError(
-            f"SAFETY GUARD TRIGGERED: Refusing destructive test execution on development database '{target_url}'. "
+            f"SAFETY GUARD TRIGGERED: Refusing destructive test execution on development database '{safe_url}'. "
             f"Automated test suites must run against a dedicated isolated test database (e.g. '{TEST_DATABASE_NAME}')."
         )
 
     # General guard: refuse if database is explicitly dev without test in the name
     if ("_dev" in target_url or "/dev" in target_url) and "test" not in target_url:
+        safe_url = mask_database_credentials(target_url)
         raise UnsafeTestDatabaseError(
-            f"SAFETY GUARD TRIGGERED: Database URL '{target_url}' appears to be a development database. "
+            f"SAFETY GUARD TRIGGERED: Database URL '{safe_url}' appears to be a development database. "
             "Refusing test execution."
         )

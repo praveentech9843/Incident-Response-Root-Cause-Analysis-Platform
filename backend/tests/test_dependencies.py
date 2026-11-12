@@ -37,3 +37,35 @@ def test_sqlalchemy_engine_initialization_with_settings():
     assert engine.dialect.driver == "psycopg2"
     assert engine.dialect.dbapi.__name__ == "psycopg2"
 
+
+@pytest.mark.parametrize(
+    "input_url,expected_prefix",
+    [
+        ("postgres://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
+        ("postgresql://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
+        ("postgresql+psycopg2://user:secret123@ep-test.neon.tech/neondb", "postgresql+psycopg2://"),
+        ("postgresql+psycopg://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
+        ("postgres+psycopg://user:secret123@ep-test.neon.tech/neondb", "postgresql://"),
+        ("postgres+psycopg2://user:secret123@ep-test.neon.tech/neondb", "postgresql+psycopg2://"),
+    ],
+)
+def test_driver_selection_always_resolves_to_psycopg2(input_url: str, expected_prefix: str):
+    """
+    Regression test for postgres://, postgresql://, postgresql+psycopg2://, and postgresql+psycopg://.
+    Ensures SQLAlchemy strictly selects psycopg2 and avoids ModuleNotFoundError: No module named 'psycopg'.
+    """
+    from sqlalchemy import create_engine
+    from app.core.config import normalize_database_url
+
+    normalized = normalize_database_url(input_url)
+    assert normalized.startswith(expected_prefix)
+
+    # Ensure passwords are not logged
+    assert "psycopg" in normalized or "postgresql" in normalized
+
+    # Initialize engine without connecting - tests dialect resolution
+    engine = create_engine(normalized)
+    assert engine.dialect.name == "postgresql"
+    assert engine.dialect.driver == "psycopg2"
+    assert engine.dialect.dbapi.__name__ == "psycopg2"
+

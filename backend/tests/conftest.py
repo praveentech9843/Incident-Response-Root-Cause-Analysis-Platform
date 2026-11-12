@@ -52,14 +52,19 @@ def _ensure_test_database_ready() -> None:
 
     db_url = settings.DATABASE_URL
     if "postgresql" in db_url and (TEST_DB_NAME in db_url or "test" in db_url):
+        raw_conn_url = (
+            db_url.replace("postgresql+psycopg2://", "postgresql://", 1)
+            .replace("postgresql+psycopg://", "postgresql://", 1)
+            .replace("postgres://", "postgresql://", 1)
+        )
         try:
-            # Check if we can connect directly
-            conn = psycopg2.connect(db_url)
+            # Check if we can connect directly via libpq connection string
+            conn = psycopg2.connect(raw_conn_url)
             conn.close()
         except Exception:
             # Connect to postgres maintenance DB to create test DB
             try:
-                maint_url = db_url.rsplit("/", 1)[0] + "/postgres"
+                maint_url = raw_conn_url.rsplit("/", 1)[0] + "/postgres"
                 mconn = psycopg2.connect(maint_url)
                 mconn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
                 mcur = mconn.cursor()

@@ -4,6 +4,34 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import json
 
 
+def normalize_database_url(url: Union[str, None]) -> str:
+    """
+    Normalizes PostgreSQL database URLs to ensure SQLAlchemy strictly selects
+    the psycopg2 driver and prevents driver mismatch errors (e.g. Missing psycopg v3).
+
+    Handles:
+    - postgres:// -> postgresql:// (legacy/Heroku/Render cloud format)
+    - postgresql+psycopg:// -> postgresql:// (prevents ModuleNotFoundError: No module named 'psycopg')
+    - postgres+psycopg:// -> postgresql://
+    - postgres+psycopg2:// -> postgresql+psycopg2://
+    Preserves:
+    - postgresql:// -> postgresql:// (defaults to psycopg2 in SQLAlchemy)
+    - postgresql+psycopg2:// -> postgresql+psycopg2:// (explicit psycopg2)
+    - sqlite:// -> sqlite://
+    """
+    if not url or not isinstance(url, str):
+        return ""
+    if url.startswith("postgresql+psycopg://"):
+        return url.replace("postgresql+psycopg://", "postgresql://", 1)
+    if url.startswith("postgres+psycopg://"):
+        return url.replace("postgres+psycopg://", "postgresql://", 1)
+    if url.startswith("postgres+psycopg2://"):
+        return url.replace("postgres+psycopg2://", "postgresql+psycopg2://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
 class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
 
@@ -94,11 +122,7 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", "TEST_DATABASE_URL", mode="before")
     @classmethod
     def assemble_database_url(cls, v: Union[str, None]) -> str:
-        if isinstance(v, str):
-            # Normalize legacy or cloud postgres:// scheme to postgresql:// for SQLAlchemy 1.4+ / 2.0
-            if v.startswith("postgres://"):
-                return v.replace("postgres://", "postgresql://", 1)
-        return v or ""
+        return normalize_database_url(v)
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
