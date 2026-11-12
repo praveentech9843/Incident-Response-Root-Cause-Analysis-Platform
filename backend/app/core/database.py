@@ -1,15 +1,18 @@
+import os
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from app.core.config import normalize_database_url, settings
 
-# Ensure database URL uses valid SQLAlchemy dialect scheme selecting psycopg2
-# Normalization occurs immediately before engine creation
-database_url = normalize_database_url(settings.DATABASE_URL)
+# Resolve database URL from settings with environment fallback to prevent cached bypasses
+raw_url = settings.DATABASE_URL or os.environ.get("DATABASE_URL", "")
+database_url = normalize_database_url(raw_url)
 
-# Guard against any unstripped psycopg v3 dialect variants
-if "+psycopg" in database_url and "+psycopg2" not in database_url:
-    database_url = normalize_database_url(database_url)
+# Final safety lock: ensure any PostgreSQL URL explicitly specifies +psycopg2 driver
+if "://" in database_url and not database_url.startswith("sqlite"):
+    scheme, rest = database_url.split("://", 1)
+    if scheme.lower() != "postgresql+psycopg2":
+        database_url = f"postgresql+psycopg2://{rest}"
 
 # Engine configuration with dialect-specific options
 connect_args = {}

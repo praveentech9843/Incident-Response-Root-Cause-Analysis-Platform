@@ -10,17 +10,15 @@ def normalize_database_url(url: Union[str, None]) -> str:
     Normalizes PostgreSQL database URLs to ensure SQLAlchemy strictly selects
     the psycopg2 driver and prevents driver mismatch errors (e.g. Missing psycopg v3).
 
-    Handles:
-    - Stripping surrounding whitespace, newlines, and single/double quotes
-    - postgres:// -> postgresql:// (legacy/Heroku/Render cloud format)
-    - postgresql+psycopg:// -> postgresql:// (prevents ModuleNotFoundError: No module named 'psycopg')
-    - postgres+psycopg:// -> postgresql://
-    - postgresql+psycopg3:// -> postgresql://
-    - postgres+psycopg3:// -> postgresql://
+    Forces explicit 'postgresql+psycopg2://' driver scheme for all PostgreSQL variants:
+    - postgres:// -> postgresql+psycopg2:// (legacy/Heroku/Render cloud format)
+    - postgresql:// -> postgresql+psycopg2:// (guarantees psycopg2 instead of ambient psycopg)
+    - postgresql+psycopg:// -> postgresql+psycopg2:// (prevents ModuleNotFoundError: No module named 'psycopg')
+    - postgres+psycopg:// -> postgresql+psycopg2://
+    - postgresql+psycopg3:// -> postgresql+psycopg2://
+    - postgres+psycopg3:// -> postgresql+psycopg2://
     - postgres+psycopg2:// -> postgresql+psycopg2://
     Preserves:
-    - postgresql:// -> postgresql:// (defaults to psycopg2 in SQLAlchemy)
-    - postgresql+psycopg2:// -> postgresql+psycopg2:// (explicit psycopg2)
     - sqlite:// -> sqlite://
     """
     if not url or not isinstance(url, str):
@@ -35,20 +33,18 @@ def normalize_database_url(url: Union[str, None]) -> str:
         scheme, rest = cleaned.split("://", 1)
         scheme_lower = scheme.lower()
 
-        # Handle psycopg v3 driver variants -> normalize to postgresql://
-        # so SQLAlchemy exclusively selects psycopg2
+        # Handle all PostgreSQL driver variants -> strictly force postgresql+psycopg2://
+        # so SQLAlchemy is guaranteed to select the installed psycopg2 DBAPI driver
         if scheme_lower in (
+            "postgres",
+            "postgresql",
             "postgresql+psycopg",
             "postgres+psycopg",
             "postgresql+psycopg3",
             "postgres+psycopg3",
+            "postgres+psycopg2",
+            "postgresql+psycopg2",
         ):
-            return f"postgresql://{rest}"
-
-        # Handle legacy postgres scheme
-        if scheme_lower == "postgres":
-            return f"postgresql://{rest}"
-        if scheme_lower == "postgres+psycopg2":
             return f"postgresql+psycopg2://{rest}"
 
         return f"{scheme}://{rest}"

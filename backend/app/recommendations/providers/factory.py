@@ -15,8 +15,8 @@ def get_recommendation_provider(settings: Optional[Settings] = None) -> Optional
     Returns None if provider is disabled or missing required API keys.
     """
     if settings is None:
-        from app.core.config import Settings
-        settings = Settings()
+        from app.core.config import settings as app_settings
+        settings = app_settings
 
     provider_type = (settings.RECOMMENDATION_PROVIDER or "none").lower()
 
